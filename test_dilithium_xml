@@ -1,0 +1,48 @@
+import os
+import xml.etree.ElementTree as ET
+from dilithium import Dilithium2, Dilithium3, Dilithium5
+from hashlib import sha256
+import tkinter as tk
+from tkinter import filedialog
+
+dilithium = Dilithium2
+public_key, private_key = dilithium.keygen()
+
+def sign_xml_file(input_file):
+    # Стъпка 1: Прочитане XML файла
+    tree = ET.parse(input_file)
+    root = tree.getroot()
+
+    # Стъпка 2: Преобразуване на XML файла в низ и изчисляване неговия хеш
+    xml_str = ET.tostring(root, encoding='utf-8', method='xml')
+    xml_hash = sha256(xml_str).digest()
+
+    # Стъпка 3: Генериране на подписа
+    signature = dilithium.sign(private_key, xml_hash)
+
+    # Стъпка 4: Добавяне на подписа към XML файла като нов елемент
+    signature_element = ET.Element('Signature')
+    signature_element.text = signature.hex()
+    root.append(signature_element)
+
+    # Стъпка 5: Запазване на подписания XML файл
+    output_file = os.path.splitext(input_file)[0] + '_signed.xml'
+    tree.write(output_file, encoding='utf-8', xml_declaration=True)
+    print(f"Signed XML file saved as: {output_file}")
+
+def choose_file_and_sign():
+    # Създаване на основен прозорец на Tkinter
+    root = tk.Tk()
+    root.withdraw()  # Скривне на главния прозорец
+
+    # Отваряне на диалоговия прозорец на файла, за избиране на XML файла
+    input_file = filedialog.askopenfilename(title="Select XML file to sign", filetypes=[("XML files", "*.xml")])
+
+    if input_file:
+        # Извикване на функцията за подписване на файла
+        sign_xml_file(input_file)
+    else:
+        print("No file selected.")
+
+# Извикване на функцията за избиране и подписване на файл
+choose_file_and_sign()
