@@ -1,0 +1,32 @@
+import xml.etree.ElementTree as ET
+from dilithium import Dilithium2, Dilithium3, Dilithium5
+from hashlib import sha256
+
+dilithium_instance = Dilithium2
+def sign_xml_file(input_file, output_file):
+    # Стъпка 1: Прочитане XML файл
+    tree = ET.parse(input_file)
+    root = tree.getroot()
+
+    # Стъпка 2: Преобразуване на XML файла и изчисляване на неговия хеш
+    xml_str = ET.tostring(root, encoding='utf-8', method='xml')
+    xml_hash = sha256(xml_str).digest()
+
+    # Стъпка 3: Генериране на подписа
+    sk_bytes = dilithium_instance._pack_sk 
+    signature = dilithium_instance.sign(pk, xml_hash)
+
+    # Стъпка 4: Добавяне на подписа към XML файла като нов елемент
+    signature_element = ET.Element('Signature')
+    signature_element.text = signature.hex()
+    root.append(signature_element)
+
+    # Стъпка 5: Запазване на XML файла
+    tree.write(output_file, encoding='utf-8', xml_declaration=True)
+
+# Генериране на ключове
+sk, pk = dilithium_instance.keygen()
+
+# Подписване на XML файла
+sign_xml_file('input.xml', 'signed_output.xml')
+
