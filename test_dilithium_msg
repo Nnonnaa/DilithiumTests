@@ -1,0 +1,58 @@
+from dilithium import Dilithium2, Dilithium3, Dilithium5
+
+# Инициализиране на обект Dilithium с параметри
+# Наличните параметри включват: 'Dilithium2', 'Dilithium3', 'Dilithium5'
+dilithium = Dilithium2
+
+# Стъпка 1: Генериране на ключове
+public_key, private_key = dilithium.keygen()
+
+# Изпечатване на публичен ключ
+print(f"Public key: {public_key}\n")
+# Изпечатване на частен ключ
+print(f"Private key: {private_key}\n")
+
+# Масив от съобщения за подписване
+messages = [
+    b"Message 1: The Crystals Delithium algorithm is based on hard tasks that are considered to be resistant to quantum attacks.",
+    b"Message 2: Cryptographic algorithms are fundamental for security.",
+    b"Message 3: The Dilithium algorithm is post-quantum secure.",
+    b"",  # Празно съобщение
+    b"A" * 10000  # Много дълго съобщение
+]
+
+# Стъпка 2: Подписване на съобщенията
+signatures = []
+for message in messages:
+    signature = dilithium.sign(private_key, message)
+    signatures.append(signature)
+
+# Печатане на подписите
+for i, signature in enumerate(signatures):
+    print(f"Signature for Message {i+1}: {signature}\n")
+
+# Стъпка 3: Проверка
+for i, message in enumerate(messages):
+    is_valid = dilithium.verify(public_key, message, signatures[i])
+    print(f"Verification result for Message {i+1}: {'Valid' if is_valid else 'Invalid'}")
+
+# Стъпка 4: Подправяне на подписа
+tampered_signature = signatures[0][:-1] + b'\x00'  # Промяна на последния байт от подписа
+is_valid_tampered = dilithium.verify(public_key, messages[0], tampered_signature)
+print(f"Verification of tampered signature: {'Valid' if is_valid_tampered else 'Invalid'}")
+print(f"{tampered_signature}")
+
+# Стъпка 5: Несъответстващи двойки ключове
+public_key_2, private_key_2 = dilithium.keygen()
+is_valid_with_wrong_key = dilithium.verify(public_key_2, messages[0], signatures[0])
+print(f"Verification with mismatched key pair: {'Valid' if is_valid_with_wrong_key else 'Invalid'}")
+
+# Допълнителна проверка: Проверка на крайния регистър на празното съобщение
+is_valid_empty_message = dilithium.verify(public_key, b'', signatures[3])
+print(f"Verification of empty message: {'Valid' if is_valid_empty_message else 'Invalid'}")
+
+# Допълнителна проверка: Проверка на крайния регистър на много голямото съобщение
+is_valid_large_message = dilithium.verify(public_key, b"A" * 10000, signatures[4])
+print(f"Verification of large message: {'Valid' if is_valid_large_message else 'Invalid'}")
+
+
